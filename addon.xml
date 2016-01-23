@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='utf-8'?>
+<addon id="plugin.video.sport5" name="Sport5" provider-name="Brytro" version="1.0.0">
+  <requires>
+    <import addon="xbmc.python" version="2.1.0" />
+  </requires>
+  <extension library="default.py" point="xbmc.python.pluginsource" provides="video">
+    <provides>video</provides>
+  </extension>
+  <extension point="xbmc.addon.metadata">
+    <summary lang="en">Sport5</summary>
+    <summary lang="cs">Sport5</summary>
+    <description lang="en">Czech Sport5 TV archive</description>
+    <description lang="cs">Archiv pořadů televize SPORT 5. Všechna videa na jednom místě.</description>
+    <platform>all</platform>
+    <source>https://github.com/kodi-czsk/plugin.video.sport5</source>
+  </extension>
+</addon>
