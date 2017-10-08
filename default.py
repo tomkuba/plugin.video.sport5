@@ -20,10 +20,16 @@ def get_shows():
     """    Create list of all shows    """
     link = get_web_page('http://sport5.cz/archiv/')
 
-    match = re.compile('background-image:url\((?P<thumbnail>[^"]+)\).+?href=\"(?P<programme_url>[^"]+)\" title=\"(?P<title>[^"]+)\"',
-                       re.MULTILINE | re.DOTALL).findall(link)
+    # strip unneeded html code so we can better regex needed data
+    match = re.compile('(<div class="row">.*)<footer', re.MULTILINE | re.DOTALL).findall(link)
 
-    for thumbnail, programme_url, title in match:
+    # use regex to find data; it is faster than bs4 on slower devices such as RaspberryPI
+    match = re.compile('href=\"(?P<programme_url>\/.+?\/)\".+?src="(?P<thumbnail>.+?png)" alt="(?P<title>.+?)"',
+                       re.MULTILINE | re.DOTALL).findall(match[0])
+
+    for programme_url, thumbnail, title in match:
+        programme_url = "http://sport5.cz" + programme_url
+        thumbnail = "http://sport5.cz" + thumbnail
         add_dir(title.encode('utf-8'), programme_url, 1, thumbnail)
 
     xbmcplugin.endOfDirectory(int(sys.argv[1]))
@@ -33,13 +39,16 @@ def get_episodes_of_show(programme_url):
     """    Create list of episodes    """
     link = get_web_page(programme_url)
 
-    match = re.compile('background-image: url\((?P<thumbnail>[^"]+)\).+?href=\"(?P<episode_url>[^"]+)\" title=\"(?P<title>[^"]+)\".+?date">(?P<date>[^"]+ )<',
+    match = re.compile(ur'bind="(?P<thumbnail>.+?)" alt="(?P<title>.+?)" .+?href="(?P<episode_url>.+?)".*?date">\s+(?P<date>.+?)\s+',
                        re.MULTILINE | re.DOTALL).findall(link)
 
-    for thumbnail, episode_url, title, date in match:
-        add_link(date.encode('utf-8') + title.encode('utf-8'), episode_url, 2, thumbnail)
+    for thumbnail, title, episode_url, date in match:
+        thumbnail = "http://sport5.cz" + thumbnail
+        title = title.encode('utf-8') + " (" + date.encode('utf-8') + ")"
+        add_link(title, episode_url, 2, thumbnail)
 
-    paging = re.compile(ur'"(?P<next_page_url>[^"]+)" title="Přejít na další stránku', re.UNICODE).findall(link)
+    # Find the url of the right-angle link: ">"
+    paging = re.compile(ur'.*href="(?P<next_page_url>.+?)"><i class="fa fa-fw fa-angle-right">', re.UNICODE).findall(link)
 
     for next_page_url in paging:
         plugin_id = 'plugin.video.sport5'
@@ -52,10 +61,11 @@ def get_episodes_of_show(programme_url):
 
 def get_video_link(episode_url):
     """ Download episode web page and parse stream url (one mp4 url)    """
+    xbmc.log("url:" + str(episode_url), level=xbmc.LOGNOTICE)
     link = get_web_page(episode_url)
-
-    match = re.compile('<video style.+?src="(?P<stream_url>[^"]+)"').findall(link)
-    return match[0]
+    match = re.compile('source src="(?P<stream_url>.+?)"').findall(link)
+    xbmc.log("url:" + str(match[0].encode('utf-8')), level=xbmc.LOGNOTICE)
+    return "http://sport5.cz" + match[0]
 
 
 def get_params():
