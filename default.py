@@ -39,7 +39,7 @@ def get_episodes_of_show(programme_url):
     """    Create list of episodes    """
     link = get_web_page(programme_url)
 
-    match = re.compile(ur'bind="(?P<thumbnail>.+?)" alt="(?P<title>.+?)" .+?href="(?P<episode_url>.+?)".*?date">\s+(?P<date>.+?)\s+',
+    match = re.compile(ur'bind="(?P<thumbnail>.+?)" alt="(?P<title>.+?)".+?href="(?P<episode_url>.+?)".*?date">\s+(?P<date>.+?)\s+',
                        re.MULTILINE | re.DOTALL).findall(link)
 
     for thumbnail, title, episode_url, date in match:
