@@ -1,3 +1,6 @@
+[B]1.1.1:[/B]
+Fixed titles
+Opravene titulky videi
 [B]1.1.0:[/B]
 Adapted to new website
 Opraveno pro novy web
