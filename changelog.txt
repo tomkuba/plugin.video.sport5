@@ -1,3 +1,5 @@
+[B]1.2:[/B]
+Opravene parsovani webu a prehravani
 [B]1.1.1:[/B]
 Fixed titles
 Opravene titulky videi

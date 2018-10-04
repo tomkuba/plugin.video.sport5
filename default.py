@@ -21,15 +21,16 @@ def get_shows():
     link = get_web_page('http://sport5.cz/archiv/')
 
     # strip unneeded html code so we can better regex needed data
-    match = re.compile('(<div class="row">.*)<footer', re.MULTILINE | re.DOTALL).findall(link)
+    match = re.compile('div>(<div class="row">.*)', re.MULTILINE | re.DOTALL).findall(link)
 
     # use regex to find data; it is faster than bs4 on slower devices such as RaspberryPI
-    match = re.compile('href=\"(?P<programme_url>\/.+?\/)\".+?src="(?P<thumbnail>.+?png)" alt="(?P<title>.+?)"',
+    match = re.compile('<div class="row">.+?href=\"(?P<programme_url>\/.+?\/)\" class="archive-.*?src="(?P<thumbnail>.+?png)" alt="(?P<title>.+?)"',
                        re.MULTILINE | re.DOTALL).findall(match[0])
 
     for programme_url, thumbnail, title in match:
         programme_url = "http://sport5.cz" + programme_url
-        thumbnail = "http://sport5.cz" + thumbnail
+        thumbnail = thumbnail
+        print "Sport5LOG: programme_url: {0}, thumbnail: {1}, title: {2}".format(str(programme_url), str(thumbnail), str(title))
         add_dir(title.encode('utf-8'), programme_url, 1, thumbnail)
 
     xbmcplugin.endOfDirectory(int(sys.argv[1]))
@@ -39,12 +40,13 @@ def get_episodes_of_show(programme_url):
     """    Create list of episodes    """
     link = get_web_page(programme_url)
 
-    match = re.compile(ur'bind="(?P<thumbnail>.+?)" alt="(?P<title>.+?)".+?href="(?P<episode_url>.+?)".*?date">\s+(?P<date>.+?)\s+',
+    match = re.compile(ur'bind="(?P<thumbnail>.+?)" alt="(?P<title>.+?)".+?href="(?P<episode_url>.+?)"',
                        re.MULTILINE | re.DOTALL).findall(link)
 
-    for thumbnail, title, episode_url, date in match:
-        thumbnail = "http://sport5.cz" + thumbnail
-        title = title.encode('utf-8') + " (" + date.encode('utf-8') + ")"
+    for thumbnail, title, episode_url in match:
+        thumbnail = thumbnail
+        title = title.encode('utf-8')
+        print "Sport5LOG: thumbnail: {0}, title: {1}, episode_url: {2}".format(str(thumbnail), str(title), str(episode_url))
         add_link(title, episode_url, 2, thumbnail)
 
     # Find the url of the right-angle link: ">"
@@ -65,7 +67,7 @@ def get_video_link(episode_url):
     link = get_web_page(episode_url)
     match = re.compile('source src="(?P<stream_url>.+?)"').findall(link)
     xbmc.log("url:" + str(match[0].encode('utf-8')), level=xbmc.LOGNOTICE)
-    return "http://sport5.cz" + match[0]
+    return match[0]
 
 
 def get_params():
@@ -92,6 +94,10 @@ def add_link(name, url, mode, iconimage):
     liz = xbmcgui.ListItem(name, iconImage="DefaultVideo.png", thumbnailImage=iconimage)
     liz.setInfo(type="Video", infoLabels={"Title": name})
     liz.setProperty('IsPlayable', 'true')
+    liz.setProperty('inputstreamaddon', 'inputstream.adaptive')
+    liz.setProperty('inputstream.adaptive.manifest_type', 'mpd')
+    liz.setMimeType('application/dash+xml')
+    liz.setContentLookup(False)
     ok = xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=u, listitem=liz)
     return ok
 
@@ -117,7 +123,7 @@ if params["name"]:
 if params["mode"]:
     mode = int(params["mode"])
 
-# print "Sport5LOG: Mode: {0}, URL: {1}, Name: {2}".format(str(mode), str(url), str(name))
+print "Sport5LOG: Mode: {0}, URL: {1}, Name: {2}".format(str(mode), str(url), str(name))
 
 if mode is None:  # List all shows
     get_shows()
